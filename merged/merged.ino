@@ -231,6 +231,20 @@ void loop()
     }
   }
 
+  const uint8_t new_user_number = get_user_number_from_gpio();
+  if(new_user_number != initial_user_number) {
+    Serial.println("Switching User!");
+    initial_user_number = new_user_number;
+    const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + initial_user_number;
+    const uint8_t saved_set_temp = EEPROM.read(saved_temp_eeprom_address);
+    //if saved val is too high, set it to max
+    if (saved_set_temp > max_set_temp) {
+      EEPROM.write(saved_temp_eeprom_address, (uint8_t)max_set_temp);
+    }
+    set_temp = float(saved_set_temp);
+    print_set_temp();
+  }
+
   //Adjust servo once every 5 seconds
   static unsigned long old_time = 0;
   const unsigned long new_time = millis();
@@ -241,8 +255,6 @@ void loop()
     const float temp_error = abs(current_temp - set_temp);
   }
 
-  Serial.print("Servo Position = ");
-  Serial.println(servo_position);
   servo_position = get_servo_from_temp(set_temp);
   myservo.write(servo_position);
 }
