@@ -62,10 +62,7 @@ const unsigned int temperature_eeprom_start = 0;
 
 //User profile info
 const char *user_names[] = {"Off","Brad","Gino", "Josh"};
-
-
-
-
+const uint8_t user_colors[] = {RED, YELLOW, GREEN, BLUE};
 
 uint8_t initial_user_number = 0;
 
@@ -100,6 +97,7 @@ void print_set_temp()
   lcd.print(" Temp: ");
   lcd.print(set_temp);
   lcd.print("F");
+  lcd.setBacklight(user_colors[initial_user_number]);
 }
 
 float get_temp_fahrenheit(DeviceAddress deviceAddress)
