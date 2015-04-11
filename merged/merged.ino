@@ -60,6 +60,13 @@ uint8_t user = 0;
 //Start address for user data in EEPROM
 const unsigned int temperature_eeprom_start = 0;
 
+//User profile info
+const char *user_names[] = {"Off","Brad","Gino", "Josh"};
+
+
+
+
+
 uint8_t initial_user_number = 0;
 
 uint8_t get_user_number_from_gpio(void)
@@ -87,7 +94,10 @@ void print_current_temp()
 void print_set_temp()
 {
   lcd.setCursor(0, 0);
-  lcd.print("Set Temp: ");
+  Serial.print("User Num ");
+  Serial.println(user);
+  lcd.print(user_names[initial_user_number]);
+  lcd.print(" Temp: ");
   lcd.print(set_temp);
   lcd.print("F");
 }
