@@ -27,6 +27,8 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define VIOLET 0x5
 #define WHITE 0x7
 
+uint8_t set_temp = 87;
+  
 void setup() {
   // Debugging output
   Serial.begin(9600);
@@ -36,44 +38,45 @@ void setup() {
   // Print a message to the LCD. We track how long it takes since
   // this library has been optimized a bit and we're proud of it :)
   int time = millis();
-  lcd.print("Hello, world!");
-  time = millis() - time;
-  Serial.print("Took "); Serial.print(time); Serial.println(" ms");
-  lcd.setBacklight(WHITE);
+  print_set_temp();
+  print_current_temp();
+  lcd.setBacklight(BLUE);
 }
 
+//Stub for temp measurement
+uint8_t get_current_temp()
+{
+  return 57; 
+}
+
+void print_current_temp()
+{
+  lcd.setCursor(0, 1);
+  lcd.print("Cur Temp: ");
+  lcd.print(get_current_temp());
+  lcd.print("F");
+}
+
+void print_set_temp()
+{
+//  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Set Temp: ");
+  lcd.print(set_temp);
+  lcd.print("F");
+}
 uint8_t i=0;
 void loop() {
-  // set the cursor to column 0, line 1
-  // (note: line 1 is the second row, since counting begins with 0):
-  lcd.setCursor(0, 1);
-  // print the number of seconds since reset:
-  lcd.print(millis()/1000);
-
   uint8_t buttons = lcd.readButtons();
-
+  print_current_temp();
   if (buttons) {
-    lcd.clear();
-    lcd.setCursor(0,0);
     if (buttons & BUTTON_UP) {
-      lcd.print("UP ");
-      lcd.setBacklight(RED);
+      set_temp += 1;
+      print_set_temp();
     }
     if (buttons & BUTTON_DOWN) {
-      lcd.print("DOWN ");
-      lcd.setBacklight(YELLOW);
-    }
-    if (buttons & BUTTON_LEFT) {
-      lcd.print("LEFT ");
-      lcd.setBacklight(GREEN);
-    }
-    if (buttons & BUTTON_RIGHT) {
-      lcd.print("RIGHT ");
-      lcd.setBacklight(TEAL);
-    }
-    if (buttons & BUTTON_SELECT) {
-      lcd.print("SELECT ");
-      lcd.setBacklight(VIOLET);
+      set_temp -= 1;
+      print_set_temp();   
     }
   }
 }
