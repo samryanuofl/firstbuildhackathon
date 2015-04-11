@@ -44,7 +44,8 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 float set_temp = 87.0;
 float current_temp = 50.0;
 const float max_set_temp = 100.0;
-const float min_set_temp = 70.0;
+const float min_set_temp = 50.0;
+const float temp_dead_band = 3.00;
 
 const unsigned int saved_temp_eeprom_address = 0;
 
@@ -187,18 +188,22 @@ void loop()
   if((new_time - old_time) > tick_length_ms){
     old_time = millis();
     current_temp = get_temp_fahrenheit(water_thermometer);
-    if(current_temp > set_temp) {
-      Serial.println("Adjust Cold");
-      adjust_servo(COLD);
+    const float temp_error = abs(current_temp - set_temp);
+    if(temp_error > temp_dead_band) {
+      if(current_temp > set_temp) {
+        Serial.println("Adjust Cold");
+        adjust_servo(COLD);
+      }
+      else {
+        Serial.println("Adjust Hot");
+        adjust_servo(HOT);
+      }
     }
     else {
-      Serial.println("Adjust Hot");
-      adjust_servo(HOT);
+      Serial.println("Temp in deadband");
     }
     Serial.print("Servo Position = ");
     Serial.println(servo_position);
     myservo.write(servo_position);  
   }
-
-  
 }
