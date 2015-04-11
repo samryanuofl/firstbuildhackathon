@@ -28,15 +28,14 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define WHITE 0x7
 
 uint8_t set_temp = 87;
-  
+const uint8_t max_set_temp = 100;
+const uint8_t min_set_temp = 70;
 void setup() {
   // Debugging output
   Serial.begin(9600);
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
 
-  // Print a message to the LCD. We track how long it takes since
-  // this library has been optimized a bit and we're proud of it :)
   int time = millis();
   print_set_temp();
   print_current_temp();
@@ -59,23 +58,51 @@ void print_current_temp()
 
 void print_set_temp()
 {
-//  lcd.clear();
+
   lcd.setCursor(0,0);
   lcd.print("Set Temp: ");
   lcd.print(set_temp);
   lcd.print("F");
 }
+
+//Return false and don't increment if temp at max, otherwise increment and return true
+boolean increment_set_temp(void)
+{
+  const uint8_t new_set_temp = set_temp + 1;
+  if(new_set_temp > max_set_temp) {
+    return false; 
+  }
+  else {
+    set_temp = new_set_temp;
+    return true;
+  }
+}
+
+
+//Return false and don't decrement if temp at min, otherwise decrement and return true
+boolean decrement_set_temp(void)
+{
+  const uint8_t new_set_temp = set_temp - 1;
+  if(new_set_temp < min_set_temp) {
+    return false; 
+  }
+  else {
+    set_temp = new_set_temp;
+    return true;
+  }
+}
+
 uint8_t i=0;
 void loop() {
   uint8_t buttons = lcd.readButtons();
   print_current_temp();
   if (buttons) {
     if (buttons & BUTTON_UP) {
-      set_temp += 1;
+      increment_set_temp();
       print_set_temp();
     }
     if (buttons & BUTTON_DOWN) {
-      set_temp -= 1;
+      decrement_set_temp();
       print_set_temp();   
     }
   }
