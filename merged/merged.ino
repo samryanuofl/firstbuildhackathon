@@ -46,8 +46,8 @@ const uint8_t COLD = 0x02;
 
 const int HOT_INCREMENT_SIZE = 10;
 const int COLD_INCREMENT_SIZE = -10;
-const unsigned int SERVO_MAX_POSITION = 170;
-const unsigned int SERVO_MIN_POSITION = 10;
+const unsigned int SERVO_MAX_POSITION = 180;
+const unsigned int SERVO_MIN_POSITION = 0;
 const uint8_t SERVO_CENTER_POSITION = 90;
 
 uint8_t servo_position = 80;
@@ -163,9 +163,9 @@ void adjust_servo(uint8_t water_temp_direction)
 
 uint8_t get_servo_from_temp(uint8_t temp_fahrenheit)
 {
-#define num_points 12
-  const uint8_t servo_positions[num_points] = {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120};
-  const uint8_t temperatures[num_points] = {60, 65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115};
+#define num_points 3
+  const uint8_t servo_positions[num_points] = {0, 90,180};
+  const uint8_t temperatures[num_points] = {79, 94, 104};
 
   int i;
   uint8_t new_servo_position = 0;
