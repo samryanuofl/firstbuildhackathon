@@ -46,13 +46,20 @@ float current_temp = 50.0;
 const float max_set_temp = 100.0;
 const float min_set_temp = 70.0;
 
+const unsigned int saved_temp_eeprom_address = 0;
 
-////Stub for temp measurement
-//uint8_t get_current_temp(void)
-//{
-//  float temp = get_temp_fahrenheit();
-//  return 57;
-//}
+//Directions for SERVO direction
+const uint8_t HOT = 0x01;
+const uint8_t COLD = 0x02;
+
+const int HOT_INCREMENT_SIZE = 10;
+const int COLD_INCREMENT_SIZE = -10;
+const unsigned int SERVO_MAX_POSITION = 170;
+const unsigned int SERVO_MIN_POSITION = 10;
+const uint8_t SERVO_CENTER_POSITION = 90; 
+
+uint8_t servo_position = 80;
+
 
 void print_current_temp()
 {
@@ -97,7 +104,6 @@ boolean increment_set_temp(void)
   }
 }
 
-
 //Return false and don't decrement if temp at min, otherwise decrement and return true
 boolean decrement_set_temp(void)
 {
@@ -108,6 +114,22 @@ boolean decrement_set_temp(void)
   else {
     set_temp = new_set_temp;
     return true;
+  }
+}
+
+void adjust_servo(uint8_t water_temp_direction)
+{
+  if(water_temp_direction == HOT) {
+      const uint8_t new_servo_position = servo_position + HOT_INCREMENT_SIZE;
+      if((new_servo_position < SERVO_MAX_POSITION) && (new_servo_position > SERVO_MIN_POSITION)) {
+        servo_position = new_servo_position;
+      }
+  }
+  else {
+      const uint8_t new_servo_position = servo_position + COLD_INCREMENT_SIZE;
+      if((new_servo_position < SERVO_MAX_POSITION) && (new_servo_position > SERVO_MIN_POSITION)) {
+        servo_position = new_servo_position;
+      }  
   }
 }
 
@@ -124,35 +146,59 @@ void setup()
 
   // set up the LCD's number of columns and rows: 
   lcd.begin(16, 2);
-
+  
+  //Read back saved "set_temp" value from EEPROM
+  const uint8_t saved_set_temp = EEPROM.read(saved_temp_eeprom_address);
+  //if saved val is too high, set it to max
+  if(saved_set_temp > max_set_temp) {
+    EEPROM.write(saved_temp_eeprom_address, (uint8_t)max_set_temp);
+  }
+  set_temp = float(saved_set_temp);
+  
   int time = millis();
   print_set_temp();
   print_current_temp();
   lcd.setBacklight(BLUE);  
 }
 
-
 void loop()
 {
   uint8_t buttons = lcd.readButtons();
   print_current_temp();
   if (buttons) {
-    if (buttons & BUTTON_UP) {
+    if(buttons & BUTTON_UP) {
       increment_set_temp();
       print_set_temp();
     }
-    if (buttons & BUTTON_DOWN) {
+    if(buttons & BUTTON_DOWN) {
       decrement_set_temp();
       print_set_temp();   
     }
+    if(buttons & BUTTON_SELECT) {
+       EEPROM.write(saved_temp_eeprom_address, (uint8_t)set_temp);
+    }
   }
 
-  current_temp = get_temp_fahrenheit(water_thermometer);
-  if(current_temp > set_temp) {
-    myservo.write(20);
+
+  //Adjust servo once every 5 seconds
+  static unsigned long old_time = 0;
+  const unsigned long new_time = millis();
+  const unsigned long tick_length_ms = 1000;
+  if((new_time - old_time) > tick_length_ms){
+    old_time = millis();
+    current_temp = get_temp_fahrenheit(water_thermometer);
+    if(current_temp > set_temp) {
+      Serial.println("Adjust Cold");
+      adjust_servo(COLD);
+    }
+    else {
+      Serial.println("Adjust Hot");
+      adjust_servo(HOT);
+    }
+    Serial.print("Servo Position = ");
+    Serial.println(servo_position);
+    myservo.write(servo_position);  
   }
-  else {
-    myservo.write(160);
-  }
+
   
 }
