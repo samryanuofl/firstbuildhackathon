@@ -4,7 +4,7 @@
 #include <Wire.h>
 #include <Adafruit_MCP23017.h>
 #include <Adafruit_RGBLCDShield.h>
-
+#include <EEPROM.h>
 
 #include <OneWire.h>
 #include <DallasTemperature.h>
@@ -24,10 +24,7 @@ DallasTemperature sensors(&oneWire);
 // See the tutorial on how to obtain these addresses:
 // http://www.hacktronics.com/Tutorials/arduino-1-wire-address-finder.html
 
-DeviceAddress insideThermometer = {   0x28, 0xFF, 0xD3, 0x63, 0x54, 0x14, 0x00, 0x72 };
-DeviceAddress outsideThermometer = { 0x28, 0x6B, 0xDF, 0xDF, 0x02, 0x00, 0x00, 0xC0 };
-DeviceAddress dogHouseThermometer = { 0x28, 0x59, 0xBE, 0xDF, 0x02, 0x00, 0x00, 0x9F };
-
+DeviceAddress water_thermometer = {   0x28, 0xFF, 0xD3, 0x63, 0x54, 0x14, 0x00, 0x72 };
 
 // The shield uses the I2C SCL and SDA pins. On classic Arduinos
 // this is Analog 4 and 5 so you can't use those for analogRead() anymore
@@ -45,6 +42,7 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define WHITE 0x7
 
 float set_temp = 87.0;
+float current_temp = 50.0;
 const float max_set_temp = 100.0;
 const float min_set_temp = 70.0;
 
@@ -60,9 +58,7 @@ void print_current_temp()
 {
   lcd.setCursor(0, 1);
   lcd.print("Cur Temp: ");
-  float tmp = get_temp_fahrenheit(insideThermometer);
-  uint8_t temp = (uint8_t)temp;
-  lcd.print(tmp);
+  lcd.print(current_temp);
   lcd.print("F");
 }
 
@@ -122,7 +118,7 @@ void setup()
   // Start up the library
   sensors.begin();
   // set the resolution to 10 bit (good enough?)
-  sensors.setResolution(insideThermometer, 10);
+  sensors.setResolution(water_thermometer, 10);
   
   myservo.attach(8);
 
@@ -151,12 +147,12 @@ void loop()
     }
   }
 
-  float cur_temp = get_temp_fahrenheit(insideThermometer);
-  if(cur_temp > set_temp) {
-    myservo.write(0);
+  current_temp = get_temp_fahrenheit(water_thermometer);
+  if(current_temp > set_temp) {
+    myservo.write(20);
   }
   else {
-    myservo.write(180);
+    myservo.write(160);
   }
   
 }
