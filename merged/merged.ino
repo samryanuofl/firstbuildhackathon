@@ -36,7 +36,7 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 float set_temp = 87.0;
 float current_temp = 50.0;
-const float max_set_temp = 100.0;
+const float max_set_temp = 120.0;
 const float min_set_temp = 50.0;
 const float temp_dead_band = 3.00;
 
@@ -53,8 +53,8 @@ const uint8_t SERVO_CENTER_POSITION = 90;
 uint8_t servo_position = 80;
 
 //These two pins used to select user profile
-const int user_select_pin_1 = 12;
-const int user_select_pin_2 = 13;
+const int user_select_pin_1 = 4;
+const int user_select_pin_2 = 5;
 //Select the user number
 uint8_t user = 0;
 //Start address for user data in EEPROM
@@ -183,6 +183,7 @@ void setup()
   
   //Read back saved "set_temp" value from EEPROM
   initial_user_number = get_user_number_from_gpio();
+
   const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + initial_user_number;
   const uint8_t saved_set_temp = EEPROM.read(saved_temp_eeprom_address);
   //if saved val is too high, set it to max
@@ -220,7 +221,7 @@ void loop()
   //Adjust servo once every 5 seconds
   static unsigned long old_time = 0;
   const unsigned long new_time = millis();
-  const unsigned long tick_length_ms = 1000;
+  const unsigned long tick_length_ms = 500;
   if((new_time - old_time) > tick_length_ms){
     old_time = millis();
     current_temp = get_temp_fahrenheit(water_thermometer);
@@ -238,8 +239,16 @@ void loop()
     else {
       Serial.println("Temp in deadband");
     }
+    
+    Serial.print("Pin 4 ");
+    Serial.println(digitalRead(user_select_pin_1));
+    Serial.print("Pin 5 ");
+    Serial.println(digitalRead(user_select_pin_2));  
+    Serial.println();    
+    
     Serial.print("Servo Position = ");
     Serial.println(servo_position);
+    Serial.println();
     myservo.write(servo_position);  
   }
 }
