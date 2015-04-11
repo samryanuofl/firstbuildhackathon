@@ -44,9 +44,9 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 #define VIOLET 0x5
 #define WHITE 0x7
 
-uint8_t set_temp = 87;
-const uint8_t max_set_temp = 100;
-const uint8_t min_set_temp = 70;
+float set_temp = 87.0;
+const float max_set_temp = 100.0;
+const float min_set_temp = 70.0;
 
 
 ////Stub for temp measurement
@@ -73,20 +73,6 @@ void print_set_temp()
   lcd.print(set_temp);
   lcd.print("F");
 }
-
-void printTemperature(DeviceAddress deviceAddress)
-{
-  float tempC = sensors.getTempC(deviceAddress);
-  if (tempC == -127.00) {
-    Serial.print("Error getting temperature");
-  } else {
-    Serial.print("C: ");
-    Serial.print(tempC);
-    Serial.print(" F: ");
-    Serial.print(DallasTemperature::toFahrenheit(tempC));
-  }
-}
-
 
 float get_temp_fahrenheit(DeviceAddress deviceAddress)
 {
@@ -152,11 +138,6 @@ void setup()
 
 void loop()
 {
-//  delay(2000);
-//  Serial.print("Getting temperatures...\n\r");
-  sensors.requestTemperatures();
-  
-
   uint8_t buttons = lcd.readButtons();
   print_current_temp();
   if (buttons) {
@@ -168,8 +149,14 @@ void loop()
       decrement_set_temp();
       print_set_temp();   
     }
-  }  
-  
-  
+  }
+
+  float cur_temp = get_temp_fahrenheit(insideThermometer);
+  if(cur_temp > set_temp) {
+    myservo.write(0);
+  }
+  else {
+    myservo.write(180);
+  }
   
 }
