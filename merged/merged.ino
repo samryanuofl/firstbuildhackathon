@@ -5,7 +5,6 @@
 #include <Adafruit_MCP23017.h>
 #include <Adafruit_RGBLCDShield.h>
 #include <EEPROM.h>
-
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
@@ -16,15 +15,9 @@ Servo myservo;
 
 // Setup a oneWire instance to communicate with any OneWire devices
 OneWire oneWire(ONE_WIRE_BUS);
-
 // Pass our oneWire reference to Dallas Temperature. 
 DallasTemperature sensors(&oneWire);
-
-// Assign the addresses of your 1-Wire temp sensors.
-// See the tutorial on how to obtain these addresses:
-// http://www.hacktronics.com/Tutorials/arduino-1-wire-address-finder.html
-
-DeviceAddress water_thermometer = {   0x28, 0xFF, 0xD3, 0x63, 0x54, 0x14, 0x00, 0x72 };
+DeviceAddress water_thermometer = {0x28, 0xFF, 0xD3, 0x63, 0x54, 0x14, 0x00, 0x72};
 
 // The shield uses the I2C SCL and SDA pins. On classic Arduinos
 // this is Analog 4 and 5 so you can't use those for analogRead() anymore
@@ -47,8 +40,6 @@ const float max_set_temp = 100.0;
 const float min_set_temp = 50.0;
 const float temp_dead_band = 3.00;
 
-const unsigned int saved_temp_eeprom_address = 0;
-
 //Directions for SERVO direction
 const uint8_t HOT = 0x01;
 const uint8_t COLD = 0x02;
@@ -61,6 +52,29 @@ const uint8_t SERVO_CENTER_POSITION = 90;
 
 uint8_t servo_position = 80;
 
+//These two pins used to select user profile
+const int user_select_pin_1 = 12;
+const int user_select_pin_2 = 13;
+//Select the user number
+uint8_t user = 0;
+//Start address for user data in EEPROM
+const unsigned int temperature_eeprom_start = 0;
+
+uint8_t initial_user_number = 0;
+
+uint8_t get_user_number_from_gpio(void)
+{
+  uint8_t user_select_1_val = 0;
+  uint8_t user_select_2_val = 0;
+  if(digitalRead(user_select_pin_1)) {
+    user_select_1_val = 1;
+  }
+  if(digitalRead(user_select_pin_2)) {
+    user_select_2_val = 1;
+  } 
+  const uint8_t user_number = (user_select_2_val * 2) + user_select_1_val;
+  return user_number;
+}
 
 void print_current_temp()
 {
@@ -118,6 +132,19 @@ boolean decrement_set_temp(void)
   }
 }
 
+uint8_t get_saved_temp(uint8_t user_number)
+{
+  const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + user_number;
+  const uint8_t saved_set_temp = EEPROM.read(saved_temp_eeprom_address);   
+  return saved_set_temp;
+}
+
+void store_temp(uint8_t user_number, uint8_t value)
+{
+  const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + user_number;
+  EEPROM.write(saved_temp_eeprom_address, value);
+}
+
 void adjust_servo(uint8_t water_temp_direction)
 {
   if(water_temp_direction == HOT) {
@@ -134,8 +161,14 @@ void adjust_servo(uint8_t water_temp_direction)
   }
 }
 
+
+
 void setup()
 {
+  //Pin setup
+  pinMode(user_select_pin_1, INPUT);
+  pinMode(user_select_pin_2, INPUT);
+  
   // start serial port
   Serial.begin(9600);
   // Start up the library
@@ -149,6 +182,8 @@ void setup()
   lcd.begin(16, 2);
   
   //Read back saved "set_temp" value from EEPROM
+  initial_user_number = get_user_number_from_gpio();
+  const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + initial_user_number;
   const uint8_t saved_set_temp = EEPROM.read(saved_temp_eeprom_address);
   //if saved val is too high, set it to max
   if(saved_set_temp > max_set_temp) {
@@ -176,7 +211,8 @@ void loop()
       print_set_temp();   
     }
     if(buttons & BUTTON_SELECT) {
-       EEPROM.write(saved_temp_eeprom_address, (uint8_t)set_temp);
+      const uint8_t saved_temp_eeprom_address = temperature_eeprom_start  + initial_user_number;      
+      EEPROM.write(saved_temp_eeprom_address, (uint8_t)set_temp);
     }
   }
 
